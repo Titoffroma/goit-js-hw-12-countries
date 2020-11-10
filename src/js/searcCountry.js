@@ -5,13 +5,14 @@ var debounce = require('lodash.debounce');
 
 const countryInputRef = document.querySelector('.search-form__input');
 const resultRef = document.querySelector('.result');
-countryInputRef.addEventListener('input', debounce(createData, 500));
+const countryAPItoFetch = 'https://restcountries.eu/rest/v2/name/';
+let countryNameAPItoFetch;
 
-const getRestData = function (countryName) {
+function getRestData(countryName) {
   resultRef.textContent = 'SEARCHING...  ' + countryName;
   resultRef.classList.add('anim');
-  return fetch(`https://restcountries.eu/rest/v2/name/${countryName}`, {
-    method: 'GET',
+  countryNameAPItoFetch = countryAPItoFetch + countryName;
+  return fetch(countryNameAPItoFetch, {
     headers: {
       Accept: 'application/json',
     },
@@ -19,16 +20,60 @@ const getRestData = function (countryName) {
     if (response.ok) return response.json();
     throw new Error('Error fetching data');
   });
-};
+}
 
 function createData(event) {
-  console.log('hi');
-  const countryName = event.target.value;
   removeError();
-
+  const countryName = event.target.value;
   if (countryName.length === 0) return;
+  fetchData(countryName);
+}
 
-  getRestData(countryName)
+function operateData(data) {
+  clearResult();
+  if (data.length > 10) {
+    pushError();
+    return;
+  }
+  if (data.length === 1) {
+    resultRef.innerHTML = createResultList(data);
+    return;
+  }
+  if (data.length > 1) {
+    enableResultListListner(data);
+  }
+}
+
+function clearResult() {
+  resultRef.textContent = '';
+  resultRef.classList.remove('anim');
+  removeError();
+}
+
+function removeError() {
+  const errorRef = document.querySelector('.error');
+  if (errorRef) errorRef.remove();
+}
+
+function pushError() {
+  error({
+    text: 'To many matches found. Please enter more specific query',
+  });
+}
+
+function enableResultListListner(data) {
+  resultRef.innerHTML = createCountryList(data);
+  const listRef = document.querySelector('.country-list');
+  listRef.addEventListener('click', resultListenToFetch, { once: true });
+}
+
+function resultListenToFetch(event) {
+  countryInputRef.value = event.target.textContent;
+  fetchData(countryInputRef.value);
+}
+
+function fetchData(countryName) {
+  return getRestData(countryName)
     .then(operateData)
     .catch(err => {
       error({
@@ -38,45 +83,4 @@ function createData(event) {
     });
 }
 
-function operateData(data) {
-  resultRef.textContent = '';
-  resultRef.classList.remove('anim');
-  removeError();
-  console.log(data);
-  if (data.length > 10) {
-    error({
-      text: 'To many matches found. Please enter more specific query',
-    });
-    return;
-  }
-
-  if (data.length === 1) {
-    resultRef.innerHTML = createResultList(data);
-    return;
-  }
-
-  if (data.length > 1) {
-    resultRef.innerHTML = createCountryList(data);
-    const listRef = document.querySelector('.country-list');
-    listRef.addEventListener(
-      'click',
-      event => {
-        countryInputRef.value = event.target.textContent;
-        getRestData(event.target.textContent)
-          .then(operateData)
-          .catch(err => {
-            error({
-              text: `${err}`,
-              type: 'error',
-            });
-          });
-      },
-      { once: true },
-    );
-  }
-}
-
-function removeError() {
-  const errorRef = document.querySelector('.error');
-  if (errorRef) errorRef.remove();
-}
+countryInputRef.addEventListener('input', debounce(createData, 500));
