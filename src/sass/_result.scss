@@ -5,13 +5,22 @@
   list-style-position: inside;
   width: 200px;
   margin: 0 auto;
+  pointer-events: none;
+
   &__item {
     color: rgba(54, 32, 32, 0.6);
     cursor: pointer;
+    pointer-events: all;
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    &:hover {
+      overflow: visible;
+    }
   }
 }
 .result {
-  text-align: center;
   width: 100%;
   color: rgba(78, 67, 182, 0.6);
   &__country-name {
@@ -68,5 +77,7 @@
   }
 }
 .anim {
+  width: 200px;
+  text-align: center;
   animation: search 2s ease infinite;
 }
