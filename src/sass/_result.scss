@@ -17,12 +17,14 @@
     text-overflow: ellipsis;
     &:hover {
       overflow: visible;
+      color: rgba(78, 67, 182, 0.6);
     }
   }
 }
 .result {
   width: 100%;
   color: rgba(78, 67, 182, 0.6);
+  overflow: hidden;
   &__country-name {
     padding: 10px;
     color: rgba(132, 9, 148, 0.8);
