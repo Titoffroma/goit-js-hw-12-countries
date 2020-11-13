@@ -6,18 +6,24 @@ var debounce = require('lodash.debounce');
 const countryInputRef = document.querySelector('.search-form__input');
 const resultRef = document.querySelector('.result');
 const countryAPItoFetch = 'https://restcountries.eu/rest/v2/name/';
+const fullName = '?fullText=true';
 let countryNameAPItoFetch;
 
-function getRestData(countryName) {
+function getRestData(countryName, full = false) {
   resultRef.textContent = 'SEARCHING...  ' + countryName;
   resultRef.classList.add('anim');
-  countryNameAPItoFetch = countryAPItoFetch + countryName;
+  countryNameAPItoFetch = full
+    ? countryAPItoFetch + countryName + fullName
+    : countryAPItoFetch + countryName;
   return fetch(countryNameAPItoFetch, {
     headers: {
       Accept: 'application/json',
     },
   }).then(response => {
     if (response.ok) return response.json();
+    if (response.status == 404) {
+      return response.json();
+    }
     throw new Error('Error fetching data');
   });
 }
@@ -31,17 +37,28 @@ function createData(event) {
 
 function operateData(data) {
   clearResult();
+  if (data.message) {
+    error({
+      text: data.message,
+    });
+    return;
+  }
   if (data.length > 10) {
     pushError();
     return;
   }
   if (data.length === 1) {
-    resultRef.innerHTML = createResultList(data);
+    operateDataAtOnce(data);
     return;
   }
   if (data.length > 1) {
     enableResultListListner(data);
   }
+}
+
+function operateDataAtOnce(countryName) {
+  clearResult();
+  resultRef.innerHTML = createResultList(countryName);
 }
 
 function clearResult() {
@@ -69,12 +86,23 @@ function enableResultListListner(data) {
 
 function resultListenToFetch(event) {
   countryInputRef.value = event.target.textContent;
-  fetchData(countryInputRef.value);
+  fetchDataAtOnce(countryInputRef.value);
 }
 
 function fetchData(countryName) {
   return getRestData(countryName)
     .then(operateData)
+    .catch(err => {
+      error({
+        text: `${err}`,
+        type: 'error',
+      });
+    });
+}
+
+function fetchDataAtOnce(countryName) {
+  return getRestData(countryName, true)
+    .then(operateDataAtOnce)
     .catch(err => {
       error({
         text: `${err}`,
