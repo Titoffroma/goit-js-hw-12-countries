@@ -20,49 +20,29 @@ function getRestData(countryName, full = false) {
       Accept: 'application/json',
     },
   }).then(response => {
-    if (response.ok) return response.json();
-    if (response.status == 404) {
-      return response.json();
-    }
+    if (response.ok || response.status === 404) return response.json();
     throw new Error('Error fetching data');
   });
 }
 
 function createData(event) {
   removeError();
-  const countryName = event.target.value;
-  if (countryName.length === 0) return;
+  const countryName = event.target.value.trim();
+  if (countryName.length === 0) return clearResult();
   fetchData(countryName);
 }
 
 function operateData(data) {
   clearResult();
-  if (data.message) {
-    error({
-      text: data.message,
-    });
-    return;
-  }
-  if (data.length > 10) {
-    pushError();
-    return;
-  }
-  if (data.length === 1) {
-    operateDataAtOnce(data);
-    return;
-  }
-  if (data.length > 1) {
-    enableResultListListner(data);
-  }
-}
-
-function operateDataAtOnce(countryName) {
-  clearResult();
-  resultRef.innerHTML = createResultList(countryName);
+  if (data.message) return pushError(data.message);
+  if (data.length > 10)
+    return pushError('To many matches found. Please enter more specific query');
+  if (data.length === 1) return (resultRef.innerHTML = createResultList(data));
+  if (data.length > 1) enableResultListListner(data);
 }
 
 function clearResult() {
-  resultRef.textContent = '';
+  resultRef.innerHTML = '';
   resultRef.classList.remove('anim');
   removeError();
 }
@@ -72,9 +52,9 @@ function removeError() {
   if (errorRef) errorRef.remove();
 }
 
-function pushError() {
+function pushError(err = 'Error') {
   error({
-    text: 'To many matches found. Please enter more specific query',
+    text: `${err}`,
   });
 }
 
@@ -86,23 +66,12 @@ function enableResultListListner(data) {
 
 function resultListenToFetch(event) {
   countryInputRef.value = event.target.textContent;
-  fetchDataAtOnce(countryInputRef.value);
+  fetchData(countryInputRef.value, true);
 }
 
-function fetchData(countryName) {
-  return getRestData(countryName)
+function fetchData(countryName, atOnce = false) {
+  return getRestData(countryName, atOnce)
     .then(operateData)
-    .catch(err => {
-      error({
-        text: `${err}`,
-        type: 'error',
-      });
-    });
-}
-
-function fetchDataAtOnce(countryName) {
-  return getRestData(countryName, true)
-    .then(operateDataAtOnce)
     .catch(err => {
       error({
         text: `${err}`,
