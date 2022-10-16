@@ -5,7 +5,7 @@ var debounce = require('lodash.debounce');
 
 const countryInputRef = document.querySelector('.search-form__input');
 const resultRef = document.querySelector('.result');
-const countryAPItoFetch = 'https://restcountries.eu/rest/v2/name/';
+const countryAPItoFetch = 'https://restcountries.com/rest/v2/name/';
 const fullName = '?fullText=true';
 let countryNameAPItoFetch;
 
